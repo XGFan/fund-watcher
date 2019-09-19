@@ -17,5 +17,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PackageRegistry }}
         run: |
           docker login docker.pkg.github.com --username XGFan --password $GITHUB_TOKEN
-          docker build . --file Dockerfile --tag docker.pkg.github.com/xgfan/fund-watcher:latest
-          docker push docker.pkg.github.com/xgfan/fund-watcher:latest
+          docker build . --file Dockerfile --tag docker.pkg.github.com/xgfan/fund-watcher/app:latest
+          docker push docker.pkg.github.com/xgfan/fund-watcher/app:latest
