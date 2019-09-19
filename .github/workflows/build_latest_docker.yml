@@ -24,4 +24,4 @@ jobs:
         run: |
           docker login docker.pkg.github.com --username XGFan --password $GITHUB_TOKEN
           docker build . --file Dockerfile --tag docker.pkg.github.com/xgfan/fund-watcher/app:latest
-          docker push docker.pkg.github.com/XGFan/fund-watcher/app:1.0
+          docker push docker.pkg.github.com/xgfan/fund-watcher/app:1.0
