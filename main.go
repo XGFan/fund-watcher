@@ -1,4 +1,4 @@
-package fund
+package main
 
 import (
 	"encoding/json"
@@ -101,11 +101,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func LoadFundIds() []FundId {
 	home := os.Getenv("HOME")
-	bytes, _ := ioutil.ReadFile(home + "/.fund")
+	file := home + "/.fund"
+	bytes, _ := ioutil.ReadFile(file)
+	log.Printf("Load fund list from: %s", file)
 	s := string(bytes)
 	split := strings.Split(s, "\n")
 	var fundIds []FundId
 	for _, v := range split {
+		if v == "" {
+			continue
+		}
 		i := strings.Split(v, ",")
 		weight, _ := strconv.ParseFloat(i[1], 64)
 		x := FundId{i[0], weight}
