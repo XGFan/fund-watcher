@@ -20,7 +20,7 @@ jobs:
 
       - name: Build the Docker image
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PackageRegistry }}
         run: |
           docker login docker.pkg.github.com --username XGFan --password $GITHUB_TOKEN
           docker build . --file Dockerfile --tag docker.pkg.github.com/XGFan/fund-watcher/app:latest
