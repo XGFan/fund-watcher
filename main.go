@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jedib0t/go-pretty/table"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -65,7 +66,7 @@ func main() {
 	port := flag.Int("p", 16000, "port number, only valid in server mode")
 	flag.Parse()
 	if *isServer {
-		Webserver(*port)
+		WebServer(*port)
 	} else {
 		Console()
 	}
@@ -85,18 +86,33 @@ func Console() {
 	t.Render()
 }
 
-func Webserver(port int) {
+func WebServer(port int) {
 	http.HandleFunc("/fund", handler)
+	http.HandleFunc("/fund.html", htmlHandler)
 	addr := fmt.Sprintf(":%d", port)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	ids := LoadFundIds()
-	result := GetFundResult(ids)
-	bytes, _ := json.Marshal(result)
+	result := getResult(r)
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = fmt.Fprintln(w, string(bytes))
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+func htmlHandler(w http.ResponseWriter, r *http.Request) {
+	result := getResult(r)
+	tmpl, _ := template.ParseFiles("table.html")
+	_ = tmpl.Execute(w, result)
+}
+
+func getResult(r *http.Request) FundResult {
+	ids := LoadFundIds()
+	if len(ids) == 0 {
+		json.NewDecoder(r.Body).Decode(&ids)
+	}
+	log.Printf("%v", ids)
+	result := GetFundResult(ids)
+	return result
 }
 
 func LoadFundIds() []FundId {
