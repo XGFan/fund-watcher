@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -135,13 +136,32 @@ func LoadFundIds() []FundId {
 	return fundIds
 }
 func GetFundResult(fundIds []FundId) FundResult {
-	var fundItems []FundItem
+	var workerGroup sync.WaitGroup
+	var consumerGroup sync.WaitGroup
+	fundChan := make(chan FundItem)
+	workerGroup.Add(len(fundIds))
+	consumerGroup.Add(1)
+	items := make([]FundItem, 0)
 	for _, idAndWeight := range fundIds {
-		fund := GetFund(idAndWeight.Id)
-		item := FundItem{fund, idAndWeight.Weight}
-		fundItems = append(fundItems, item)
+		go GetFundRoutine(idAndWeight.Id, idAndWeight.Weight, &workerGroup, fundChan)
 	}
-	return NewFundResult(fundItems)
+	go func() {
+		for fund := range fundChan {
+			items = append(items, fund)
+		}
+		consumerGroup.Done()
+	}()
+	workerGroup.Wait()
+	close(fundChan)
+	consumerGroup.Wait()
+	return NewFundResult(items)
+}
+
+func GetFundRoutine(id string, weight float64, wg *sync.WaitGroup, ch chan FundItem) {
+	defer wg.Done()
+	fund := GetFund(id)
+	item := FundItem{fund, weight}
+	ch <- item
 }
 
 func GetFund(id string) Fund {
