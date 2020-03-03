@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,6 +43,9 @@ type FundResult struct {
 
 func NewFundResult(items []FundItem) FundResult {
 	fundResult := FundResult{}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Weight >= items[j].Weight
+	})
 	fundResult.Funds = items
 	fundResult.Avg = fundResult.avg()
 	return fundResult
@@ -102,7 +106,44 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	result := getResult(r)
-	tmpl, _ := template.ParseFiles("table.html")
+	tmpl, _ := template.New("h").Parse(`
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.bootcss.com/mini.css/3.0.1/mini-default.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<table width="100%">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>名称</th>
+        <th>时间</th>
+        <th>增长率</th>
+        <th>权重</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Funds}}
+        <tr>
+            <td data-label="ID">{{.FCODE}}</td>
+            <td data-label="名称">{{.SHORTNAME}}</td>
+            <td data-label="时间">{{.GZTIME}}</td>
+            <td data-label="增长率">{{printf "%s%s" .GSZZL "%"}}</td>
+            <td data-label="权重">{{.Weight}}</td>
+        </tr>
+    {{end}}
+    <td>AVG</td>
+    <td></td>
+    <td></td>
+    <td>{{ printf "%f%s" .Avg "%" }}</td>
+    <td></td>
+    </tbody>
+</table>
+</body>
+</html>
+`)
 	_ = tmpl.Execute(w, result)
 }
 
