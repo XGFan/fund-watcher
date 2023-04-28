@@ -17,13 +17,13 @@
     </thead>
     <tbody>
     {{range .Funds}}
-        <tr>
-            <td data-label="ID">{{.FCODE}}</td>
-            <td data-label="名称">{{.SHORTNAME}}</td>
-            <td data-label="时间">{{.GZTIME}}</td>
-            <td data-label="增长率">{{printf "%s%s" .GSZZL "%"}}</td>
-            <td data-label="权重">{{.Weight}}</td>
-        </tr>
+    <tr>
+        <td data-label="ID">{{.FCODE}}</td>
+        <td data-label="名称">{{.SHORTNAME}}</td>
+        <td data-label="时间">{{.GZTIME}}</td>
+        <td data-label="增长率">{{printf "%s%s" .GSZZL "%"}}</td>
+        <td data-label="权重">{{.Weight}}</td>
+    </tr>
     {{end}}
     <td>AVG</td>
     <td></td>

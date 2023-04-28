@@ -1,12 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/jedib0t/go-pretty/table"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,9 @@ import (
 	"sync"
 	"time"
 )
+
+//go:embed table.html
+var tableHtml string
 
 type FundId struct {
 	Id     string
@@ -106,51 +110,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	result := getResult(r)
-	tmpl, _ := template.New("h").Parse(`
-<html lang="zh-cn">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://cdn.bootcss.com/mini.css/3.0.1/mini-default.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-<table width="100%">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>名称</th>
-        <th>时间</th>
-        <th>增长率</th>
-        <th>权重</th>
-    </tr>
-    </thead>
-    <tbody>
-    {{range .Funds}}
-        <tr>
-            <td data-label="ID">{{.FCODE}}</td>
-            <td data-label="名称">{{.SHORTNAME}}</td>
-            <td data-label="时间">{{.GZTIME}}</td>
-            <td data-label="增长率">{{printf "%s%s" .GSZZL "%"}}</td>
-            <td data-label="权重">{{.Weight}}</td>
-        </tr>
-    {{end}}
-    <td>AVG</td>
-    <td></td>
-    <td></td>
-    <td>{{ printf "%f%s" .Avg "%" }}</td>
-    <td></td>
-    </tbody>
-</table>
-</body>
-</html>
-`)
+	tmpl, _ := template.New("h").Parse(tableHtml)
 	_ = tmpl.Execute(w, result)
 }
 
 func getResult(r *http.Request) FundResult {
 	ids := LoadFundIds()
 	if len(ids) == 0 {
-		json.NewDecoder(r.Body).Decode(&ids)
+		_ = json.NewDecoder(r.Body).Decode(&ids)
 	}
 	log.Printf("%v", ids)
 	result := GetFundResult(ids)
@@ -160,7 +127,7 @@ func getResult(r *http.Request) FundResult {
 func LoadFundIds() []FundId {
 	home := os.Getenv("HOME")
 	file := home + "/.fund"
-	bytes, _ := ioutil.ReadFile(file)
+	bytes, _ := os.ReadFile(file)
 	log.Printf("Load fund list from: %s", file)
 	s := string(bytes)
 	split := strings.Split(s, "\n")
@@ -222,7 +189,7 @@ func GetFund(id string) Fund {
 	q.Add("_", ts)
 	req.URL.RawQuery = q.Encode()
 	resp, _ := http.DefaultClient.Do(req)
-	bytes, _ := ioutil.ReadAll(resp.Body)
+	bytes, _ := io.ReadAll(resp.Body)
 	wrapper := &FundWrapper{}
 	e := json.Unmarshal(bytes, wrapper)
 	if e != nil {
